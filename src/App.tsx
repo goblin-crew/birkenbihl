@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import './App.css'
-import { TranslationPreview } from './components/TranslationPreview'
-import { downloadPrimitiveTranslationDocx } from './lib/docxExport'
+import { useEffect, useRef, useState } from "react";
+import "./App.css";
+import { TranslationPreview } from "./components/TranslationPreview";
+import { downloadPrimitiveTranslationDocx } from "./lib/docxExport";
 import {
   defaultSourceLanguage,
   defaultTargetLanguage,
@@ -10,103 +10,114 @@ import {
   type LanguageCode,
   type PrimitiveTranslationBlock,
   translatePrimitiveText,
-} from './lib/primitiveTranslation'
+} from "./lib/primitiveTranslation";
 
-const STORAGE_KEY = 'primitive-translator:draft'
+const STORAGE_KEY = "primitive-translator:draft";
 
 type Draft = {
-  sourceText: string
-  sourceLanguage: LanguageCode
-  targetLanguage: LanguageCode
-}
+  sourceText: string;
+  sourceLanguage: LanguageCode;
+  targetLanguage: LanguageCode;
+};
 
 function loadDraft(): Draft {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return {
-      sourceText: '',
+      sourceText: "",
       sourceLanguage: defaultSourceLanguage,
       targetLanguage: defaultTargetLanguage,
-    }
+    };
   }
 
   try {
-    const rawValue = window.localStorage.getItem(STORAGE_KEY)
+    const rawValue = window.localStorage.getItem(STORAGE_KEY);
     if (!rawValue) {
       return {
-        sourceText: '',
+        sourceText: "",
         sourceLanguage: defaultSourceLanguage,
         targetLanguage: defaultTargetLanguage,
-      }
+      };
     }
 
-    const parsedValue = JSON.parse(rawValue) as Partial<Record<keyof Draft, string>>
+    const parsedValue = JSON.parse(rawValue) as Partial<
+      Record<keyof Draft, string>
+    >;
 
     return {
-      sourceText: typeof parsedValue.sourceText === 'string' ? parsedValue.sourceText : '',
+      sourceText:
+        typeof parsedValue.sourceText === "string"
+          ? parsedValue.sourceText
+          : "",
       sourceLanguage:
-        typeof parsedValue.sourceLanguage === 'string' && isLanguageCode(parsedValue.sourceLanguage)
+        typeof parsedValue.sourceLanguage === "string" &&
+        isLanguageCode(parsedValue.sourceLanguage)
           ? parsedValue.sourceLanguage
           : defaultSourceLanguage,
       targetLanguage:
-        typeof parsedValue.targetLanguage === 'string' && isLanguageCode(parsedValue.targetLanguage)
+        typeof parsedValue.targetLanguage === "string" &&
+        isLanguageCode(parsedValue.targetLanguage)
           ? parsedValue.targetLanguage
           : defaultTargetLanguage,
-    }
+    };
   } catch {
     return {
-      sourceText: '',
+      sourceText: "",
       sourceLanguage: defaultSourceLanguage,
       targetLanguage: defaultTargetLanguage,
-    }
+    };
   }
 }
 
 function App() {
-  const [sourceText, setSourceText] = useState(() => loadDraft().sourceText)
-  const [sourceLanguage, setSourceLanguage] = useState(() => loadDraft().sourceLanguage)
-  const [targetLanguage, setTargetLanguage] = useState(() => loadDraft().targetLanguage)
-  const [blocks, setBlocks] = useState<PrimitiveTranslationBlock[]>([])
-  const [isTranslating, setIsTranslating] = useState(false)
+  const [sourceText, setSourceText] = useState(() => loadDraft().sourceText);
+  const [sourceLanguage, setSourceLanguage] = useState(
+    () => loadDraft().sourceLanguage,
+  );
+  const [targetLanguage, setTargetLanguage] = useState(
+    () => loadDraft().targetLanguage,
+  );
+  const [blocks, setBlocks] = useState<PrimitiveTranslationBlock[]>([]);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [statusMessage, setStatusMessage] = useState(
-    'Write a few sentences, choose languages, and translate word by word.',
-  )
-  const [errorMessage, setErrorMessage] = useState('')
-  const [progress, setProgress] = useState({ completed: 0, total: 0 })
-  const runIdRef = useRef(0)
+    "Write a few sentences, choose languages, and translate word by word.",
+  );
+  const [errorMessage, setErrorMessage] = useState("");
+  const [progress, setProgress] = useState({ completed: 0, total: 0 });
+  const runIdRef = useRef(0);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
+    if (typeof window === "undefined") {
+      return;
     }
 
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ sourceText, sourceLanguage, targetLanguage }),
-    )
-  }, [sourceLanguage, sourceText, targetLanguage])
+    );
+  }, [sourceLanguage, sourceText, targetLanguage]);
 
   const handleTranslate = async () => {
-    const trimmedText = sourceText.trim()
+    const trimmedText = sourceText.trim();
 
     if (!trimmedText) {
-      setErrorMessage('Enter one or more sentences before translating.')
-      setStatusMessage('Waiting for source text.')
-      return
+      setErrorMessage("Enter one or more sentences before translating.");
+      setStatusMessage("Waiting for source text.");
+      return;
     }
 
     if (sourceLanguage === targetLanguage) {
-      setErrorMessage('Source and target languages must be different.')
-      setStatusMessage('Choose two different languages.')
-      return
+      setErrorMessage("Source and target languages must be different.");
+      setStatusMessage("Choose two different languages.");
+      return;
     }
 
-    const runId = runIdRef.current + 1
-    runIdRef.current = runId
+    const runId = runIdRef.current + 1;
+    runIdRef.current = runId;
 
-    setIsTranslating(true)
-    setErrorMessage('')
-    setStatusMessage('Translating token by token with a free browser API.')
-    setProgress({ completed: 0, total: 0 })
+    setIsTranslating(true);
+    setErrorMessage("");
+    setStatusMessage("Translating token by token with a free browser API.");
+    setProgress({ completed: 0, total: 0 });
 
     try {
       const translationResult = await translatePrimitiveText(
@@ -115,57 +126,62 @@ function App() {
         targetLanguage,
         (completed, total) => {
           if (runIdRef.current === runId) {
-            setProgress({ completed, total })
+            setProgress({ completed, total });
           }
         },
-      )
+      );
 
       if (runIdRef.current !== runId) {
-        return
+        return;
       }
 
-      setBlocks(translationResult.blocks)
+      setBlocks(translationResult.blocks);
       setStatusMessage(
         `Translated ${translationResult.blocks.length} sentence${
-          translationResult.blocks.length === 1 ? '' : 's'
+          translationResult.blocks.length === 1 ? "" : "s"
         } using a primitive word-by-word pass.`,
-      )
+      );
     } catch (error) {
       if (runIdRef.current !== runId) {
-        return
+        return;
       }
 
-      const message = error instanceof Error ? error.message : 'Translation failed.'
-      setErrorMessage(message)
-      setStatusMessage('Translation failed. The previous result is still visible below.')
+      const message =
+        error instanceof Error ? error.message : "Translation failed.";
+      setErrorMessage(message);
+      setStatusMessage(
+        "Translation failed. The previous result is still visible below.",
+      );
     } finally {
       if (runIdRef.current === runId) {
-        setIsTranslating(false)
+        setIsTranslating(false);
       }
     }
-  }
+  };
 
   const handleDownload = async () => {
     if (!blocks.length) {
-      return
+      return;
     }
 
     await downloadPrimitiveTranslationDocx({
       blocks,
       sourceLanguage,
       targetLanguage,
-    })
-  }
+    });
+  };
 
   const progressLabel =
     progress.total > 0
       ? `${progress.completed}/${progress.total} words processed`
-      : 'No translation requests running'
+      : "No translation requests running";
 
   const sourceLanguageLabel =
-    languageOptions.find((option) => option.code === sourceLanguage)?.label ?? sourceLanguage
+    languageOptions.find((option) => option.code === sourceLanguage)?.label ??
+    sourceLanguage;
   const targetLanguageLabel =
-    languageOptions.find((option) => option.code === targetLanguage)?.label ?? targetLanguage
+    languageOptions.find((option) => option.code === targetLanguage)?.label ??
+    targetLanguage;
 
   return (
     <main className="app-shell">
@@ -174,8 +190,8 @@ function App() {
           <span className="eyebrow">Primitive Translator</span>
           <h1>Build handouts that preserve sentence order and word order.</h1>
           <p>
-            Split text into sentences, translate word by word in the same order, preview the
-            result, and export a DOCX file for classroom use.
+            Split text into sentences, translate word by word in the same order,
+            preview the result, and export a DOCX file for classroom use.
           </p>
         </div>
 
@@ -199,8 +215,8 @@ function App() {
         <form
           className="control-panel"
           onSubmit={(event) => {
-            event.preventDefault()
-            void handleTranslate()
+            event.preventDefault();
+            void handleTranslate();
           }}
         >
           <div className="field-group">
@@ -220,9 +236,9 @@ function App() {
               <select
                 value={sourceLanguage}
                 onChange={(event) => {
-                  const nextValue = event.target.value
+                  const nextValue = event.target.value;
                   if (isLanguageCode(nextValue)) {
-                    setSourceLanguage(nextValue)
+                    setSourceLanguage(nextValue);
                   }
                 }}
               >
@@ -239,9 +255,9 @@ function App() {
               <select
                 value={targetLanguage}
                 onChange={(event) => {
-                  const nextValue = event.target.value
+                  const nextValue = event.target.value;
                   if (isLanguageCode(nextValue)) {
-                    setTargetLanguage(nextValue)
+                    setTargetLanguage(nextValue);
                   }
                 }}
               >
@@ -255,8 +271,12 @@ function App() {
           </div>
 
           <div className="actions">
-            <button type="submit" className="primary-button" disabled={isTranslating}>
-              {isTranslating ? 'Translating…' : 'Translate'}
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={isTranslating}
+            >
+              {isTranslating ? "Translating…" : "Translate"}
             </button>
 
             <button
@@ -269,13 +289,16 @@ function App() {
             </button>
           </div>
 
-          <p className={`status-message ${errorMessage ? 'status-message--error' : ''}`}>
+          <p
+            className={`status-message ${errorMessage ? "status-message--error" : ""}`}
+          >
             {errorMessage || statusMessage}
           </p>
 
           <p className="support-note">
-            The current build uses a free browser-callable translation API, so quality is
-            intentionally primitive and best for classroom structure exercises.
+            The current build uses a free browser-callable translation API, so
+            quality is intentionally primitive and best for classroom structure
+            exercises.
           </p>
         </form>
 
@@ -286,8 +309,8 @@ function App() {
               <h2>Aligned sentence blocks</h2>
             </div>
             <p>
-              Source and translation are rendered below each other, with words kept in the same
-              order.
+              Source and translation are rendered below each other, with words
+              kept in the same order.
             </p>
           </div>
 
@@ -295,7 +318,7 @@ function App() {
         </section>
       </section>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;

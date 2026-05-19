@@ -6,18 +6,26 @@
 }
 
 .app-shell::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at top left, rgba(194, 132, 252, 0.16), transparent 32%),
-    radial-gradient(circle at top right, rgba(251, 191, 36, 0.12), transparent 28%),
+    radial-gradient(
+      circle at top left,
+      rgba(194, 132, 252, 0.16),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(251, 191, 36, 0.12),
+      transparent 28%
+    ),
     linear-gradient(180deg, #f8f4ec 0%, #fcfaf5 45%, #f4efe3 100%);
   z-index: -2;
 }
 
 .app-shell::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 24px;
   border: 1px solid rgba(104, 83, 53, 0.12);
@@ -66,7 +74,7 @@
 .empty-state h3 {
   margin: 0;
   color: #1b1711;
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: "Georgia", "Times New Roman", serif;
 }
 
 .hero-copy h1 {
@@ -296,7 +304,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
   font-size: 0.95rem;
   color: #24190f;
   white-space: normal;
