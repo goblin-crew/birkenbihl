@@ -30,7 +30,8 @@ const docxLayoutOptions: Array<{
   {
     value: "aligned-tables",
     label: "Aligned tables",
-    description: "Best for vertical word alignment and compact sentence grouping.",
+    description:
+      "Best for vertical word alignment and compact sentence grouping.",
   },
   {
     value: "spaced-lines",
@@ -347,8 +348,9 @@ function App() {
             </select>
             <small>
               {
-                docxLayoutOptions.find((option) => option.value === docxLayoutMode)
-                  ?.description
+                docxLayoutOptions.find(
+                  (option) => option.value === docxLayoutMode,
+                )?.description
               }
             </small>
           </label>
