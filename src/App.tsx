@@ -11,6 +11,7 @@ import {
   type PrimitiveTranslationBlock,
   translatePrimitiveText,
 } from "./lib/primitiveTranslation";
+import type { DocxLayoutMode } from "./lib/docxExport";
 
 const STORAGE_KEY = "primitive-translator:draft";
 
@@ -18,7 +19,30 @@ type Draft = {
   sourceText: string;
   sourceLanguage: LanguageCode;
   targetLanguage: LanguageCode;
+  docxLayoutMode: DocxLayoutMode;
 };
+
+const docxLayoutOptions: Array<{
+  value: DocxLayoutMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "aligned-tables",
+    label: "Aligned tables",
+    description: "Best for vertical word alignment and compact sentence grouping.",
+  },
+  {
+    value: "spaced-lines",
+    label: "Spaced alignment",
+    description: "Uses monospaced spacing to keep words roughly aligned.",
+  },
+  {
+    value: "plain-paragraphs",
+    label: "Plain sentences",
+    description: "Exports normal sentences with no word alignment.",
+  },
+];
 
 function loadDraft(): Draft {
   if (typeof window === "undefined") {
@@ -26,6 +50,7 @@ function loadDraft(): Draft {
       sourceText: "",
       sourceLanguage: defaultSourceLanguage,
       targetLanguage: defaultTargetLanguage,
+      docxLayoutMode: "aligned-tables",
     };
   }
 
@@ -36,6 +61,7 @@ function loadDraft(): Draft {
         sourceText: "",
         sourceLanguage: defaultSourceLanguage,
         targetLanguage: defaultTargetLanguage,
+        docxLayoutMode: "aligned-tables",
       };
     }
 
@@ -58,12 +84,18 @@ function loadDraft(): Draft {
         isLanguageCode(parsedValue.targetLanguage)
           ? parsedValue.targetLanguage
           : defaultTargetLanguage,
+      docxLayoutMode:
+        parsedValue.docxLayoutMode === "spaced-lines" ||
+        parsedValue.docxLayoutMode === "plain-paragraphs"
+          ? parsedValue.docxLayoutMode
+          : "aligned-tables",
     };
   } catch {
     return {
       sourceText: "",
       sourceLanguage: defaultSourceLanguage,
       targetLanguage: defaultTargetLanguage,
+      docxLayoutMode: "aligned-tables",
     };
   }
 }
@@ -75,6 +107,9 @@ function App() {
   );
   const [targetLanguage, setTargetLanguage] = useState(
     () => loadDraft().targetLanguage,
+  );
+  const [docxLayoutMode, setDocxLayoutMode] = useState(
+    () => loadDraft().docxLayoutMode,
   );
   const [blocks, setBlocks] = useState<PrimitiveTranslationBlock[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -92,9 +127,14 @@ function App() {
 
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ sourceText, sourceLanguage, targetLanguage }),
+      JSON.stringify({
+        sourceText,
+        sourceLanguage,
+        targetLanguage,
+        docxLayoutMode,
+      }),
     );
-  }, [sourceLanguage, sourceText, targetLanguage]);
+  }, [docxLayoutMode, sourceLanguage, sourceText, targetLanguage]);
 
   const handleTranslate = async () => {
     const trimmedText = sourceText.trim();
@@ -168,6 +208,7 @@ function App() {
       blocks,
       sourceLanguage,
       targetLanguage,
+      layoutMode: docxLayoutMode,
     });
   };
 
@@ -288,6 +329,29 @@ function App() {
               Download DOCX
             </button>
           </div>
+
+          <label className="docx-layout-field">
+            <span>DOCX layout</span>
+            <select
+              value={docxLayoutMode}
+              onChange={(event) => {
+                const nextValue = event.target.value as DocxLayoutMode;
+                setDocxLayoutMode(nextValue);
+              }}
+            >
+              {docxLayoutOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <small>
+              {
+                docxLayoutOptions.find((option) => option.value === docxLayoutMode)
+                  ?.description
+              }
+            </small>
+          </label>
 
           <p
             className={`status-message ${errorMessage ? "status-message--error" : ""}`}
